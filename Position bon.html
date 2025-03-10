@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Position au cm</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="Regulation.css">
+	<link rel="stylesheet" href="stylevideo.css">
+</head>
+<body>
+    <header>
+        <h1>Position cm</h1>
+    </header>
+    <main>
+        <div id="position-info" class="info-box">
+            <p><strong>Latitude:</strong> <span id="latitude">-</span> cm</p>
+            <p><strong>Longitude:</strong> <span id="longitude">-</span> cm</p>
+            <p><strong>Altitude:</strong> <span id="altitude">-</span> cm</p>
+            <p><strong>Précision:</strong> <span id="accuracy">-</span> m</p>
+        </div>
+        <div class="position-container">
+            <div id="loop-box" class="counter-box"><strong>Boucles:</strong> <span id="loop-counter">0</span></div>
+            <div id="error-info" class="error-box"><strong>12 Coeur:</strong> <span id="error">-</span> cm</div>
+        </div>
+        <button onclick="toggleTracking()" id="toggle-button">Lancer</button>
+        <button onclick="copyCoordinates()" id="copy-button">Copier les coordonnées</button>
+    </main>
+    <footer>
+        <p>12 Coeur 03 2025</p>
+    </footer>
+    <script>
+        let lastPosition = {};
+        let loopCount = 0;
+        let tracking = false;
+        let interval;
+        let positions = [];
+        let centerOfGravity = { lat: 0, lon: 0, alt: 0 };
+        let lastError = 0;
+
+        function toggleTracking() {
+            const button = document.getElementById("toggle-button");
+            const copyButton = document.getElementById("copy-button");
+            const positionBox = document.getElementById("position-info");
+            
+            if (tracking) {
+                clearInterval(interval);
+                tracking = false;
+                button.textContent = "Lancer";
+                copyButton.style.display = "block";
+                positionBox.classList.remove("blink");
+                positionBox.classList.add("green");
+
+                // Afficher les dernières valeurs
+                let cmLat = document.getElementById("latitude").textContent;
+                let cmLon = document.getElementById("longitude").textContent;
+                let cmAlt = document.getElementById("altitude").textContent;
+                let precision = document.getElementById("error").textContent;
+
+                positionBox.innerHTML = `
+                    <p><strong>Latitude:</strong> ${cmLat} cm</p>
+                    <p><strong>Longitude:</strong> ${cmLon} cm</p>
+                    <p><strong>Altitude:</strong> ${cmAlt} cm</p>
+                    <p><strong>Précision:</strong> ${precision} cm (12 Coeur)</p>
+                `;
+            } else {
+                positions = [];
+                centerOfGravity = { lat: 0, lon: 0, alt: 0 };
+                loopCount = 0;
+                document.getElementById("loop-counter").textContent = loopCount;
+                getLocation();
+                interval = setInterval(getLocation, 2000);
+                tracking = true;
+                button.textContent = "Arrêter";
+                copyButton.style.display = "none";
+                positionBox.classList.remove("green");
+            }
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            }
+        }
+
+        function showPosition(position) {
+            const positionBox = document.getElementById("position-info");
+
+            // Clignotement une fois par boucle (2 secondes)
+            positionBox.classList.add("blink");
+            setTimeout(() => {
+                positionBox.classList.remove("blink");
+            }, 2000);
+
+            loopCount++;
+            document.getElementById("loop-counter").textContent = loopCount;
+            lastPosition.rawLat = position.coords.latitude.toFixed(6);
+            lastPosition.rawLon = position.coords.longitude.toFixed(6);
+            lastPosition.accuracy = (position.coords.accuracy).toFixed(2) + " m";
+            lastPosition.altitude = position.coords.altitude ? position.coords.altitude.toFixed(2) + " m" : "Non disponible";
+
+            positions.push({
+                lat: position.coords.latitude,
+                lon: position.coords.longitude,
+                alt: position.coords.altitude || 0,
+                accuracy: position.coords.accuracy
+            });
+
+            centerOfGravity.lat = positions.reduce((sum, pos) => sum + pos.lat, 0) / positions.length;
+            centerOfGravity.lon = positions.reduce((sum, pos) => sum + pos.lon, 0) / positions.length;
+            centerOfGravity.alt = positions.reduce((sum, pos) => sum + pos.alt, 0) / positions.length;
+
+            let errorLat = (position.coords.latitude - centerOfGravity.lat) * 111320;
+            let errorLon = (position.coords.longitude - centerOfGravity.lon) * 111320 * Math.cos(position.coords.latitude * (Math.PI / 180));
+            let error = Math.sqrt(Math.pow(errorLat, 2) + Math.pow(errorLon, 2)).toFixed(2);
+
+            document.getElementById("error").textContent = (error * 100).toFixed(0); // Pas de décimales
+            document.getElementById("error").className = error > lastError ? "error-increase" : "error-decrease";
+            lastError = error;
+
+            let cmLat = (position.coords.latitude * 111320 * 100).toFixed(2); // Conversion en cm
+            let cmLon = (position.coords.longitude * 111320 * Math.cos(position.coords.latitude * (Math.PI / 180)) * 100).toFixed(2); // Conversion en cm
+            let cmAlt = position.coords.altitude ? (position.coords.altitude * 100).toFixed(2) : "Non disponible"; // Conversion en cm
+
+            document.getElementById("latitude").textContent = cmLat;
+            document.getElementById("longitude").textContent = cmLon;
+            document.getElementById("altitude").textContent = cmAlt;
+            document.getElementById("accuracy").textContent = (position.coords.accuracy).toFixed(2);
+        }
+
+        function showError(error) {
+            document.getElementById("position-info").innerHTML = "Erreur de localisation.";
+        }
+
+        function copyCoordinates() {
+            let precision = document.getElementById("error").textContent; // Précision en cm (sans décimales)
+            let text = `Latitude: ${lastPosition.rawLat}\nLongitude: ${lastPosition.rawLon}\nAltitude: ${lastPosition.altitude}\nLes coordonnées sont affinées par 12 Coeur à ${precision} cm près.`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Les coordonnées ont été copiées dans le presse-papiers.");
+            });
+        }
+    </script>
+
+</body>
+</html>

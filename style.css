@@ -1,0 +1,113 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    background: url('arriereplan.png') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    font-size: 1.5em;
+}
+
+/* Règle spécifique pour Chrome */
+@media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
+    body {
+        font-size: 3.2em; /* Ajustez la taille de la police pour Chrome */
+    }
+}
+
+header, footer {
+    background-color: rgba(0, 123, 255, 0.5);
+    color: white;
+    width: 100%;
+    text-align: center;
+    position: fixed;
+    height: 10%;
+    line-height: 1.5;
+    padding: 0;
+}
+
+header {
+    top: 0;
+}
+
+footer {
+    bottom: 0;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 12% 0;
+}
+
+.info-box, .precision-box, .counter-box, .error-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    min-width: 300px;
+    max-width: 80%;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.info-box.blink {
+    animation: blink 1s infinite alternate;
+}
+
+.info-box.green {
+    background-color: #e6ffe6; /* Vert pâle */
+}
+
+@keyframes blink {
+    50% { opacity: 0.5; }
+}
+
+.position-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+button {
+    background-color: #007BFF;
+    color: white;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2em;
+    margin: 10px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#copy-button {
+    display: none;
+}
+
+.error-increase {
+    color: red;
+}
+
+.error-decrease {
+    color: green;
+}
