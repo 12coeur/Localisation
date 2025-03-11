@@ -4,16 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Position au cm</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="Regulation.css">
-	<link rel="stylesheet" href="stylevideo.css">
+    <link rel="stylesheet" href="stylevideo.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html {
+            font-size: 16px;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            background: url('arriereplan.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            font-size: 1.5em;
+        }
+        header, footer {
+            background-color: rgba(0, 123, 255, 0.5);
+            color: white;
+            width: 100%;
+            text-align: center;
+            position: fixed;
+            height: 10%;
+            line-height: 1.5;
+            padding: 0;
+        }
+        header { top: 0; }
+        footer { bottom: 0; }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 12% 0;
+        }
+        .info-box, .precision-box, .counter-box, .error-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-width: 300px;
+            max-width: 80%;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        .info-box.blink {
+            animation: blink 1s infinite alternate;
+        }
+        .info-box.green {
+            background-color: #e6ffe6; /* Vert pâle */
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+        .position-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+        #copy-button { display: none; }
+        .error-increase { color: red; }
+        .error-decrease { color: green; }
+    </style>
 </head>
 <body>
     <header>
         <h1>Position cm</h1>
     </header>
     <main>
-        <div id="position-info" class="info-box">
+        <div id="position-info" class="info-box blink">
             <p><strong>Latitude:</strong> <span id="latitude">-</span> cm</p>
             <p><strong>Longitude:</strong> <span id="longitude">-</span> cm</p>
             <p><strong>Altitude:</strong> <span id="altitude">-</span> cm</p>
@@ -51,18 +129,18 @@
                 positionBox.classList.remove("blink");
                 positionBox.classList.add("green");
 
-                // Afficher les dernières valeurs
-                let cmLat = document.getElementById("latitude").textContent;
-                let cmLon = document.getElementById("longitude").textContent;
-                let cmAlt = document.getElementById("altitude").textContent;
-                let precision = document.getElementById("error").textContent;
-
-                positionBox.innerHTML = `
-                    <p><strong>Latitude:</strong> ${cmLat} cm</p>
-                    <p><strong>Longitude:</strong> ${cmLon} cm</p>
-                    <p><strong>Altitude:</strong> ${cmAlt} cm</p>
-                    <p><strong>Précision:</strong> ${precision} cm (12 Coeur)</p>
-                `;
+                // Afficher la position corrigée vers le centre de gravité
+                if (centerOfGravity.lat && centerOfGravity.lon) {
+                    let correctedLat = (centerOfGravity.lat * 111320).toFixed(2);
+                    let correctedLon = (centerOfGravity.lon * 111320 * Math.cos(centerOfGravity.lat * (Math.PI / 180))).toFixed(2);
+                    let correctedAlt = centerOfGravity.alt.toFixed(2);
+                    positionBox.innerHTML = `
+                        <p><strong>Latitude:</strong> ${correctedLat} cm</p>
+                        <p><strong>Longitude:</strong> ${correctedLon} cm</p>
+                        <p><strong>Altitude:</strong> ${correctedAlt} cm</p>
+                        <p><strong>Précision:</strong> ${lastPosition.accuracy}</p>
+                    `;
+                }
             } else {
                 positions = [];
                 centerOfGravity = { lat: 0, lon: 0, alt: 0 };
@@ -73,6 +151,7 @@
                 tracking = true;
                 button.textContent = "Arrêter";
                 copyButton.style.display = "none";
+                positionBox.classList.add("blink");
                 positionBox.classList.remove("green");
             }
         }
@@ -88,14 +167,6 @@
         }
 
         function showPosition(position) {
-            const positionBox = document.getElementById("position-info");
-
-            // Clignotement une fois par boucle (2 secondes)
-            positionBox.classList.add("blink");
-            setTimeout(() => {
-                positionBox.classList.remove("blink");
-            }, 2000);
-
             loopCount++;
             document.getElementById("loop-counter").textContent = loopCount;
             lastPosition.rawLat = position.coords.latitude.toFixed(6);
@@ -144,6 +215,8 @@
             });
         }
     </script>
-
+    <video autoplay loop muted playsinline class="fond-video">
+        <source src="Terrequitourne.mp4" type="video/mp4">
+    </video>
 </body>
 </html>
