@@ -1,6 +1,6 @@
 {
-  "name": "Mon App",
-  "short_name": "App",
+  "name": "Localisation",
+  "short_name": "Localisation",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
